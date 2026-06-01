@@ -436,7 +436,10 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
           <div><div style="font-size:10px;color:var(--blue);font-weight:700;text-transform:uppercase">Total Due</div><div style="font-size:16px;font-weight:700;color:var(--green)" id="editTotal">—</div></div>
         </div>
       </div>
-      <button class="btn btn-navy" onclick="saveEdit()">Save corrected reading</button>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:10px;margin-top:4px">
+        <button class="btn btn-navy" onclick="saveEdit()">Save corrected reading</button>
+        <button class="btn btn-red" style="width:auto;padding:0 18px;min-height:54px" onclick="deleteEntry()" title="Delete this entry">🗑️</button>
+      </div>
     </div>
   </div>
 
@@ -474,7 +477,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 
 <script>
 const RATE = 150;
-const MGR_PIN = '1234'; // Change this PIN
+const MGR_PIN = '170283';
 const CLIENTS = {
   Mugure:  { full: 'Grace Mugure',   color: '#1B5AAB', init: 'GM' },
   Cera:    { full: 'Cera Waweru',    color: '#0A7D8C', init: 'CW' },
@@ -1166,6 +1169,27 @@ async function saveEdit() {
   await saveReadings(key, rows);
   clearCache();
   toast('✓ Reading corrected for ' + CLIENTS[key].full + ' — ' + period);
+  // Reset form
+  document.getElementById('editClient').value = '';
+  document.getElementById('editPeriod').innerHTML = '<option value="">— select client first —</option>';
+  document.getElementById('editFormWrap').style.display = 'none';
+  document.getElementById('editPreview').style.display = 'none';
+  loadClientsTable();
+}
+
+async function deleteEntry() {
+  const key = document.getElementById('editClient').value;
+  const period = document.getElementById('editPeriod').value;
+  const clientName = CLIENTS[key]?.full || key;
+  if (!key || !period) { toast('Select a client and period first'); return; }
+  // Confirm before deleting
+  if (!confirm(`Delete ${clientName}'s reading for ${period}?\nThis cannot be undone.`)) return;
+  const rows = await getReadings(key);
+  const filtered = rows.filter(r => r.period !== period);
+  if (filtered.length === rows.length) { toast('Entry not found'); return; }
+  await saveReadings(key, filtered);
+  clearCache();
+  toast('🗑️ Deleted ' + clientName + ' reading for ' + period);
   // Reset form
   document.getElementById('editClient').value = '';
   document.getElementById('editPeriod').innerHTML = '<option value="">— select client first —</option>';
