@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0F2044">
+<title>TetraPark Water</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --navy:#0F2044;--blue:#1B5AAB;--blue2:#2E7DE0;--blue-l:#E8F2FF;
+  --teal:#0A7D8C;--teal-l:#E0F5F7;
+  --green:#1A7A4A;--green-l:#D4EDDA;
+  --red:#B83030;--red-l:#FFE8E8;
+  --amber:#C87A00;--amber-l:#FFF3CD;
+  --g50:#F8FAFC;--g100:#F1F4F8;--g200:#E2E8F0;
+  --g400:#9AA5B4;--g500:#718096;--g700:#4A5568;--g900:#1A202C;
+}
+html{font-size:16px;}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--g100);color:var(--g900);min-height:100vh;-webkit-font-smoothing:antialiased;}
+
+/* TOP BAR */
+.topbar{background:var(--navy);padding:12px 16px;padding-top:max(12px,env(safe-area-inset-top));display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:200;}
+.logo{width:38px;height:38px;border-radius:10px;background:var(--blue2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.topbar-title{color:#fff;font-size:15px;font-weight:700;line-height:1.2;}
+.topbar-sub{color:rgba(255,255,255,0.45);font-size:11px;}
+.topbar-chip{background:var(--teal);color:#fff;font-size:11px;font-weight:600;padding:5px 11px;border-radius:20px;flex-shrink:0;white-space:nowrap;cursor:pointer;}
+
+/* MODE SWITCHER */
+.mode-bar{display:flex;background:#fff;border-bottom:1px solid var(--g200);}
+.mode-btn{flex:1;padding:13px 8px;background:none;border:none;font-family:inherit;font-size:13px;font-weight:600;color:var(--g400);cursor:pointer;border-bottom:3px solid transparent;transition:all .15s;-webkit-tap-highlight-color:transparent;}
+.mode-btn.active{color:var(--blue);border-bottom-color:var(--blue);}
+
+/* TABS */
+.tabs{display:flex;background:#fff;border-bottom:1px solid var(--g200);position:sticky;top:62px;z-index:100;overflow-x:auto;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab-btn{flex:1;min-width:72px;padding:11px 8px 9px;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;color:var(--g400);font-family:inherit;border-bottom:3px solid transparent;transition:color .15s,border-color .15s;-webkit-tap-highlight-color:transparent;}
+.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue);}
+.tab-icon{font-size:20px;}
+.tab-lbl{font-size:10px;font-weight:600;letter-spacing:.03em;}
+
+/* SCREENS */
+.screen{display:none;padding:16px;padding-bottom:40px;}
+.screen.active{display:block;}
+
+/* SECTION LABEL */
+.slabel{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--g500);margin:20px 0 8px;padding:0 2px;}
+.slabel:first-child{margin-top:4px;}
+
+/* CARD */
+.card{background:#fff;border-radius:14px;border:1px solid var(--g200);padding:16px;margin-bottom:12px;}
+.divrow{padding:12px 0;border-bottom:1px solid var(--g100);display:flex;align-items:center;gap:12px;}
+.divrow:first-child{padding-top:0;}
+.divrow:last-child{border-bottom:none;padding-bottom:0;}
+
+/* CLIENT TILES */
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.ctile{background:#fff;border:2px solid var(--g200);border-radius:14px;padding:18px 10px 14px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent;user-select:none;}
+.ctile:active{transform:scale(.97);}
+.ctile.sel{border-color:var(--blue);background:var(--blue-l);}
+.avatar{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;}
+.cname{font-size:13px;font-weight:600;color:var(--g900);text-align:center;line-height:1.3;}
+.cmeter{font-size:11px;color:var(--g500);}
+
+/* STATS */
+.srow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.scard{background:#fff;border:1px solid var(--g200);border-radius:12px;padding:14px 12px;text-align:center;}
+.sval{font-size:22px;font-weight:700;color:var(--navy);}
+.slbl2{font-size:11px;color:var(--g500);margin-top:3px;}
+
+/* CHART */
+.chart-wrap{height:100px;display:flex;align-items:flex-end;gap:6px;padding:0 4px;}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
+.bar-rect{width:100%;border-radius:5px 5px 0 0;min-height:3px;}
+.bar-lbl{font-size:9px;color:var(--g500);}
+
+/* FORM */
+.field{margin-bottom:14px;}
+.field:last-child{margin-bottom:0;}
+.field label{display:block;font-size:13px;font-weight:600;color:var(--g700);margin-bottom:7px;}
+.field input,.field select{width:100%;padding:15px 14px;border:1.5px solid var(--g200);border-radius:12px;font-size:17px;font-family:inherit;color:var(--g900);background:#fff;-webkit-appearance:none;appearance:none;}
+.field input:focus,.field select:focus{outline:none;border-color:var(--blue2);box-shadow:0 0 0 3px rgba(46,125,224,.12);}
+.fhint{font-size:12px;color:var(--g500);margin-top:5px;}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.frow .field{margin-bottom:0;}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23718096' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;}
+
+/* BILL BOX */
+.bill-box{background:var(--blue-l);border:1.5px solid var(--blue2);border-radius:14px;padding:16px;margin-bottom:14px;}
+.bgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.bval{font-size:20px;font-weight:700;color:var(--navy);margin-top:3px;}
+.blbl{font-size:11px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.05em;}
+.btotal-lbl{font-size:12px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.05em;}
+.btotal-val{font-size:30px;font-weight:700;color:var(--green);margin-top:4px;}
+.deficit-note{background:var(--amber-l);border-radius:8px;padding:10px 12px;margin-top:12px;font-size:12px;color:#7B4800;display:flex;align-items:flex-start;gap:8px;}
+
+/* BUTTONS */
+.btn{width:100%;padding:16px;border-radius:12px;font-size:16px;font-weight:600;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s,transform .1s;min-height:54px;-webkit-tap-highlight-color:transparent;}
+.btn:active{transform:scale(.98);opacity:.88;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn+.btn{margin-top:10px;}
+.btn-navy{background:var(--navy);color:#fff;}
+.btn-teal{background:var(--teal);color:#fff;}
+.btn-red{background:var(--red);color:#fff;}
+.btn-outline{background:#fff;color:var(--navy);border:1.5px solid var(--g200);}
+.btn-sm{padding:10px 16px;font-size:14px;min-height:40px;width:auto;}
+
+/* HISTORY */
+.hitem{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--g100);}
+.hitem:last-child{border-bottom:none;}
+.hdot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.hperiod{font-size:14px;font-weight:600;color:var(--g900);}
+.hdetail{font-size:12px;color:var(--g500);margin-top:2px;}
+.hamount{font-size:16px;font-weight:700;color:var(--navy);text-align:right;}
+.hm3{font-size:11px;color:var(--g500);text-align:right;margin-top:2px;}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;}
+.badge-g{background:var(--green-l);color:var(--green);}
+.badge-a{background:var(--amber-l);color:var(--amber);}
+.badge-r{background:var(--red-l);color:var(--red);}
+
+/* MANAGER TABLE */
+.mgr-table{width:100%;border-collapse:collapse;font-size:13px;}
+.mgr-table th{background:var(--navy);color:#fff;padding:10px 8px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;}
+.mgr-table td{padding:11px 8px;border-bottom:1px solid var(--g100);vertical-align:middle;}
+.mgr-table tr:last-child td{border-bottom:none;}
+.mgr-table tr:nth-child(even) td{background:var(--g50);}
+
+/* DEFICIT PANEL */
+.deficit-panel{background:var(--red-l);border:1.5px solid var(--red);border-radius:14px;padding:16px;margin-bottom:12px;}
+.deficit-panel.ok{background:var(--green-l);border-color:var(--green);}
+.dp-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;}
+.dp-title.red{color:var(--red);}
+.dp-title.green{color:var(--green);}
+.dp-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.dp-item{}
+.dp-lbl{font-size:11px;color:var(--g500);margin-bottom:3px;}
+.dp-val{font-size:18px;font-weight:700;color:var(--navy);}
+.dp-val.red{color:var(--red);}
+.dp-share{background:var(--amber-l);border:1px solid var(--amber);border-radius:10px;padding:12px;margin-top:12px;text-align:center;}
+.dp-share-lbl{font-size:12px;color:var(--amber);font-weight:700;text-transform:uppercase;letter-spacing:.05em;}
+.dp-share-val{font-size:26px;font-weight:700;color:#7B4800;margin-top:4px;}
+.dp-share-sub{font-size:12px;color:#7B4800;margin-top:2px;}
+
+/* EMPTY */
+.empty{text-align:center;padding:40px 16px;color:var(--g500);}
+.empty-ico{font-size:44px;margin-bottom:10px;}
+.empty-t{font-size:15px;font-weight:600;color:var(--g700);margin-bottom:4px;}
+.empty-s{font-size:13px;}
+
+/* LOADING */
+.loading{text-align:center;padding:32px;color:var(--g500);font-size:14px;}
+
+/* TOAST */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--g900);color:#fff;padding:12px 22px;border-radius:30px;font-size:14px;font-weight:500;opacity:0;transition:all .3s;white-space:nowrap;z-index:999;pointer-events:none;box-shadow:0 4px 24px rgba(0,0,0,.18);}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* MANAGER PIN */
+.pin-overlay{position:fixed;inset:0;background:rgba(15,32,68,.85);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;}
+.pin-card{background:#fff;border-radius:20px;padding:28px 24px;width:100%;max-width:340px;text-align:center;}
+.pin-title{font-size:18px;font-weight:700;color:var(--navy);margin-bottom:6px;}
+.pin-sub{font-size:13px;color:var(--g500);margin-bottom:20px;}
+.pin-input{width:100%;padding:16px;border:1.5px solid var(--g200);border-radius:12px;font-size:24px;text-align:center;letter-spacing:.3em;font-family:inherit;color:var(--navy);}
+.pin-input:focus{outline:none;border-color:var(--blue2);}
+.pin-err{color:var(--red);font-size:13px;margin-top:10px;min-height:20px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">💧</div>
+  <div style="flex:1">
+    <div class="topbar-title">TetraPark Water</div>
+    <div class="topbar-sub" id="modeLabel">Client Portal</div>
+  </div>
+  <div class="topbar-chip" id="topChip" onclick="promptMode()">Select account</div>
+</div>
+
+<!-- MODE SWITCHER -->
+<div class="mode-bar">
+  <button class="mode-btn active" id="modeClientBtn" onclick="setMode('client')">👤 Client</button>
+  <button class="mode-btn" id="modeManagerBtn" onclick="setMode('manager')">🔧 Manager</button>
+</div>
+
+<!-- CLIENT TABS -->
+<div class="tabs" id="clientTabs">
+  <button class="tab-btn active" onclick="showTab('home',this)"><span class="tab-icon">🏠</span><span class="tab-lbl">Home</span></button>
+  <button class="tab-btn" onclick="showTab('submit',this)"><span class="tab-icon">📤</span><span class="tab-lbl">Submit</span></button>
+  <button class="tab-btn" onclick="showTab('history',this)"><span class="tab-icon">📋</span><span class="tab-lbl">History</span></button>
+  <button class="tab-btn" onclick="showTab('reports',this)"><span class="tab-icon">📄</span><span class="tab-lbl">Reports</span></button>
+</div>
+
+<!-- MANAGER TABS -->
+<div class="tabs" id="managerTabs" style="display:none">
+  <button class="tab-btn active" onclick="showMgrTab('overview',this)"><span class="tab-icon">📊</span><span class="tab-lbl">Overview</span></button>
+  <button class="tab-btn" onclick="showMgrTab('mainmeter',this)"><span class="tab-icon">🔢</span><span class="tab-lbl">Main Meter</span></button>
+  <button class="tab-btn" onclick="showMgrTab('clients',this)"><span class="tab-icon">👥</span><span class="tab-lbl">Clients</span></button>
+  <button class="tab-btn" onclick="showMgrTab('billing',this)"><span class="tab-icon">💰</span><span class="tab-lbl">Billing</span></button>
+</div>
+
+<!-- ══════════════ CLIENT SCREENS ══════════════ -->
+<div id="clientArea">
+
+<!-- HOME -->
+<div class="screen active" id="screen-home">
+  <div class="slabel">Your account</div>
+  <div class="cgrid">
+    <div class="ctile" id="tile-Mugure" onclick="pick('Mugure','Grace Mugure','#1B5AAB','GM',this)">
+      <div class="avatar" style="background:#1B5AAB">GM</div>
+      <div class="cname">Grace Mugure</div><div class="cmeter">Mugure meter</div>
+    </div>
+    <div class="ctile" id="tile-Cera" onclick="pick('Cera','Cera Waweru','#0A7D8C','CW',this)">
+      <div class="avatar" style="background:#0A7D8C">CW</div>
+      <div class="cname">Cera Waweru</div><div class="cmeter">Cera meter</div>
+    </div>
+    <div class="ctile" id="tile-George" onclick="pick('George','George Karanja','#1A7A4A','GK',this)">
+      <div class="avatar" style="background:#1A7A4A">GK</div>
+      <div class="cname">George Karanja</div><div class="cmeter">George meter</div>
+    </div>
+    <div class="ctile" id="tile-Gathauri" onclick="pick('Gathauri','Lucy Gathauri','#8B5E00','LG',this)">
+      <div class="avatar" style="background:#8B5E00">LG</div>
+      <div class="cname">Lucy Gathauri</div><div class="cmeter">Gathauri meter</div>
+    </div>
+  </div>
+  <div id="home-empty" style="text-align:center;padding:20px 0;color:var(--g500);font-size:14px">Tap your name above to view your account</div>
+  <div id="home-body" style="display:none">
+    <div class="slabel">Account overview</div>
+    <div class="srow">
+      <div class="scard"><div class="sval" id="st-count">0</div><div class="slbl2">Readings</div></div>
+      <div class="scard"><div class="sval" id="st-m3">0</div><div class="slbl2">Total m³</div></div>
+    </div>
+    <div class="card" style="padding:14px 16px">
+      <div style="font-size:11px;font-weight:700;color:var(--g500);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Total billed (incl. deficit shares)</div>
+      <div style="font-size:28px;font-weight:700;color:var(--navy)" id="st-bill">Ksh 0</div>
+    </div>
+    <div class="slabel">Recent usage</div>
+    <div class="card" style="padding:14px">
+      <div class="chart-wrap" id="mini-chart"><div style="width:100%;text-align:center;font-size:13px;color:var(--g500);padding:20px 0">No readings yet</div></div>
+    </div>
+    <div id="pending-deficit-notice" style="display:none">
+      <div class="slabel">Pending adjustment</div>
+      <div class="deficit-note" style="margin-bottom:12px">
+        <span>⚠️</span><span id="pending-deficit-text">Management has set a deficit share for this period. It will appear in your next bill.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SUBMIT -->
+<div class="screen" id="screen-submit">
+  <div id="sub-empty" class="empty"><div class="empty-ico">👤</div><div class="empty-t">Select your account first</div><div class="empty-s">Go to the Home tab and tap your name</div></div>
+  <div id="sub-form" style="display:none">
+    <div class="slabel">Billing period</div>
+    <div class="card">
+      <div class="frow">
+        <div class="field"><label>Month</label>
+          <select id="fMonth"><option>January</option><option>February</option><option>March</option><option>April</option><option>May</option><option>June</option><option>July</option><option>August</option><option>September</option><option>October</option><option>November</option><option>December</option></select>
+        </div>
+        <div class="field"><label>Year</label>
+          <select id="fYear"><option>2024</option><option>2025</option><option selected>2026</option><option>2027</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="slabel">Meter readings</div>
+    <div class="card">
+      <div class="field">
+        <label>Previous reading (m³)</label>
+        <input type="number" id="fPrev" placeholder="0.000" step="0.001" min="0" inputmode="decimal">
+        <div class="fhint">From last month's bill — auto-filled if you submitted before</div>
+      </div>
+      <div class="field">
+        <label>Current reading (m³) — read from meter today</label>
+        <input type="number" id="fCurr" placeholder="0.000" step="0.001" min="0" inputmode="decimal" oninput="calc()">
+      </div>
+    </div>
+    <div class="card" style="background:var(--amber-l);border-color:var(--amber)">
+      <div style="font-size:13px;font-weight:600;color:#7B4800;margin-bottom:4px">ℹ️ About deficit &amp; repairs</div>
+      <div style="font-size:12px;color:#7B4800;line-height:1.5">The manager calculates the deficit (difference between main meter and total client readings) and repairs. These are divided equally and added automatically to your bill after the manager approves the period.</div>
+    </div>
+    <div class="bill-box" id="billBox" style="display:none">
+      <div class="bgrid">
+        <div><div class="blbl">Used this month</div><div class="bval" id="bCons">—</div></div>
+        <div><div class="blbl">Water charge</div><div class="bval" id="bCharge">—</div></div>
+      </div>
+      <div class="btotal-lbl">Estimated total (excl. adjustments)</div>
+      <div class="btotal-val" id="bTotal">—</div>
+      <div style="font-size:11px;color:var(--g500);margin-top:8px">Final bill confirmed after manager reviews the period</div>
+    </div>
+    <button class="btn btn-navy" id="submitBtn" onclick="doSubmit()" disabled>Submit reading</button>
+  </div>
+</div>
+
+<!-- HISTORY -->
+<div class="screen" id="screen-history">
+  <div id="hist-empty" class="empty"><div class="empty-ico">📋</div><div class="empty-t">Select your account first</div><div class="empty-s">Go to the Home tab and tap your name</div></div>
+  <div id="hist-body" style="display:none">
+    <div class="slabel">All readings</div>
+    <div class="card" id="histList" style="padding:0 16px"></div>
+    <button class="btn btn-outline" onclick="doCSV()" style="margin-top:8px">Export as CSV</button>
+  </div>
+</div>
+
+<!-- REPORTS -->
+<div class="screen" id="screen-reports">
+  <div id="rep-empty" class="empty"><div class="empty-ico">📄</div><div class="empty-t">Select your account first</div><div class="empty-s">Go to the Home tab and tap your name</div></div>
+  <div id="rep-body" style="display:none">
+    <div class="slabel">Account summary</div>
+    <div class="card">
+      <div class="divrow">
+        <div class="avatar" id="repAvatar" style="width:48px;height:48px;font-size:14px">—</div>
+        <div><div style="font-size:16px;font-weight:700;color:var(--navy)" id="repName">—</div><div style="font-size:12px;color:var(--g500);margin-top:2px" id="repMeter">—</div></div>
+      </div>
+      <div class="divrow"><div style="font-size:24px">📅</div><div style="flex:1"><div style="font-size:13px;color:var(--g500)">Period</div><div style="font-weight:600;margin-top:2px" id="repPeriod">—</div></div></div>
+      <div class="divrow"><div style="font-size:24px">📊</div><div style="flex:1"><div style="font-size:13px;color:var(--g500)">Total consumed</div><div style="font-weight:600;margin-top:2px" id="repM3">—</div></div></div>
+      <div class="divrow"><div style="font-size:24px">💰</div><div style="flex:1"><div style="font-size:13px;color:var(--g500)">Total billed (all time)</div><div style="font-size:20px;font-weight:700;color:var(--navy);margin-top:2px" id="repTotal">—</div></div></div>
+    </div>
+    <button class="btn btn-teal" onclick="doPDF()">Download PDF statement</button>
+    <button class="btn btn-outline" onclick="doCSV()">Export CSV</button>
+  </div>
+</div>
+
+</div><!-- /clientArea -->
+
+<!-- ══════════════ MANAGER SCREENS ══════════════ -->
+<div id="managerArea" style="display:none">
+
+<!-- OVERVIEW -->
+<div class="screen active" id="mgr-screen-overview">
+  <div class="slabel">System summary</div>
+  <div id="mgrOverviewContent"><div class="loading">Loading data…</div></div>
+</div>
+
+<!-- MAIN METER -->
+<div class="screen" id="mgr-screen-mainmeter">
+  <div class="slabel">Record main meter reading</div>
+  <div class="card">
+    <div class="frow">
+      <div class="field"><label>Month</label>
+        <select id="mmMonth"><option>January</option><option>February</option><option>March</option><option>April</option><option>May</option><option>June</option><option>July</option><option>August</option><option>September</option><option>October</option><option>November</option><option>December</option></select>
+      </div>
+      <div class="field"><label>Year</label>
+        <select id="mmYear"><option>2024</option><option>2025</option><option selected>2026</option><option>2027</option></select>
+      </div>
+    </div>
+    <div class="field" style="margin-top:12px">
+      <label>Previous reading (m³)</label>
+      <input type="number" id="mmPrev" placeholder="0.000" step="0.001" inputmode="decimal">
+    </div>
+    <div class="field">
+      <label>Current reading (m³)</label>
+      <input type="number" id="mmCurr" placeholder="0.000" step="0.001" inputmode="decimal" oninput="calcMM()">
+    </div>
+    <div id="mmPreview" style="display:none;margin-top:4px">
+      <div style="background:var(--navy);color:#fff;border-radius:10px;padding:12px 14px">
+        <div style="font-size:11px;opacity:.6;text-transform:uppercase;letter-spacing:.06em">Main meter consumption this period</div>
+        <div style="font-size:26px;font-weight:700;margin-top:4px" id="mmConsVal">—</div>
+      </div>
+    </div>
+  </div>
+  <div class="field" style="margin-bottom:12px"><label>Repairs amount this period (Ksh) — total, will be split equally</label><input type="number" id="mmRepairs" placeholder="0" min="0" value="0" inputmode="numeric"></div>
+  <button class="btn btn-navy" onclick="saveMainMeter()">Save main meter reading</button>
+
+  <div class="slabel">Main meter history</div>
+  <div class="card" id="mmHistList" style="padding:0 16px"><div class="loading">Loading…</div></div>
+</div>
+
+<!-- CLIENTS -->
+<div class="screen" id="mgr-screen-clients">
+  <div class="slabel">Latest client readings</div>
+  <div id="clientsTableWrap"><div class="loading">Loading…</div></div>
+</div>
+
+<!-- BILLING -->
+<div class="screen" id="mgr-screen-billing">
+  <div class="slabel">Select period to finalise</div>
+  <div class="card">
+    <div class="frow">
+      <div class="field"><label>Month</label>
+        <select id="bilMonth"><option>January</option><option>February</option><option>March</option><option>April</option><option>May</option><option>June</option><option>July</option><option>August</option><option>September</option><option>October</option><option>November</option><option>December</option></select>
+      </div>
+      <div class="field"><label>Year</label>
+        <select id="bilYear"><option>2024</option><option>2025</option><option selected>2026</option><option>2027</option></select>
+      </div>
+    </div>
+    <button class="btn btn-navy" style="margin-top:12px" onclick="calcDeficit()">Calculate deficit &amp; bills</button>
+  </div>
+  <div id="billingResult"></div>
+</div>
+
+</div><!-- /managerArea -->
+
+<!-- MANAGER PIN OVERLAY -->
+<div class="pin-overlay" id="pinOverlay" style="display:none">
+  <div class="pin-card">
+    <div style="font-size:36px;margin-bottom:10px">🔐</div>
+    <div class="pin-title">Manager Access</div>
+    <div class="pin-sub">Enter your PIN to access the management dashboard</div>
+    <input class="pin-input" type="password" id="pinInput" maxlength="6" inputmode="numeric" placeholder="••••" onkeyup="checkPin(event)">
+    <div class="pin-err" id="pinErr"></div>
+    <button class="btn btn-navy" style="margin-top:16px" onclick="checkPinBtn()">Unlock</button>
+    <button class="btn btn-outline" style="margin-top:8px" onclick="closePin()">Cancel</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const RATE = 150;
+const MGR_PIN = '1234'; // Change this PIN
+const CLIENTS = {
+  Mugure:  { full: 'Grace Mugure',   color: '#1B5AAB', init: 'GM' },
+  Cera:    { full: 'Cera Waweru',    color: '#0A7D8C', init: 'CW' },
+  George:  { full: 'George Karanja', color: '#1A7A4A', init: 'GK' },
+  Gathauri:{ full: 'Lucy Gathauri',  color: '#8B5E00', init: 'LG' }
+};
+
+// ── JSONBIN SHARED STORAGE ──
+const JSONBIN_BIN_ID = '6a1da9e8ddf5aa59f780ad98';
+const JSONBIN_API_KEY = '$2a$10$eIlXNh9SBm1weix1G5YP5OCjNeD7cjjeRAMIaS0oYzDt7r7JwJVIa';
+const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
+
+let _cache = null;
+
+async function loadDB() {
+  if (_cache) return _cache;
+  // Load from localStorage first (works offline/Safari)
+  try {
+    const local = localStorage.getItem('tp_db');
+    if (local) _cache = JSON.parse(local);
+  } catch(e) {}
+  // Then sync from cloud
+  try {
+    const res = await fetch(JSONBIN_URL + '/latest', {
+      method: 'GET',
+      headers: { 'X-Master-Key': JSONBIN_API_KEY, 'X-Bin-Meta': 'false' }
+    });
+    if (res.ok) {
+      const json = await res.json();
+      _cache = json.record || json || {};
+      localStorage.setItem('tp_db', JSON.stringify(_cache));
+    }
+  } catch(e) {
+    console.warn('Cloud sync unavailable, using local:', e.message);
+    if (!_cache) _cache = {};
+  }
+  return _cache;
+}
+
+async function saveDB() {
+  if (!_cache) return;
+  localStorage.setItem('tp_db', JSON.stringify(_cache));
+  try {
+    const res = await fetch(JSONBIN_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_API_KEY },
+      body: JSON.stringify(_cache)
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    showSyncBanner(true);
+  } catch(e) {
+    console.warn('Cloud save failed:', e.message);
+    showSyncBanner(false);
+  }
+}
+
+let _bt;
+function showSyncBanner(ok) {
+  let b = document.getElementById('sync-banner');
+  if (!b) {
+    b = document.createElement('div');
+    b.id = 'sync-banner';
+    b.style.cssText = 'position:fixed;top:104px;left:0;right:0;padding:8px 16px;font-size:12px;font-weight:600;text-align:center;z-index:300;transition:opacity .5s;pointer-events:none';
+    document.body.appendChild(b);
+  }
+  b.style.background = ok ? '#D4EDDA' : '#FFF3CD';
+  b.style.color = ok ? '#1A7A4A' : '#C87A00';
+  b.textContent = ok ? '☁️ Synced — all devices updated' : '⚠️ Saved locally — open in Chrome for cloud sync';
+  b.style.opacity = '1';
+  clearTimeout(_bt);
+  _bt = setTimeout(() => { b.style.opacity = '0'; }, 4000);
+}
+
+async function dbGet(key) {
+  const db = await loadDB();
+  return db[key] !== undefined ? db[key] : null;
+}
+
+async function dbSet(key, val) {
+  const db = await loadDB();
+  db[key] = val;
+  await saveDB();
+}
+
+// Force reload from cloud (used after submits to get fresh data)
+function clearCache() { _cache = null; }
+
+async function getReadings(client) { return (await dbGet('readings_' + client)) || []; }
+async function saveReadings(client, rows) { await dbSet('readings_' + client, rows); }
+async function getMainMeters() { return (await dbGet('mainmeters')) || []; }
+async function saveMainMeters(rows) { await dbSet('mainmeters', rows); }
+async function getDeficits() { return (await dbGet('deficits')) || []; }
+async function saveDeficits(rows) { await dbSet('deficits', rows); }
+
+const isConfigured = true;
+
+// ── STATE ──
+let C = null, CF = null, CC = null, CI = null;
+let isManager = false;
+
+// ── MODE ──
+function setMode(mode) {
+  if (mode === 'manager') { document.getElementById('pinOverlay').style.display = 'flex'; return; }
+  isManager = false;
+  document.getElementById('clientArea').style.display = 'block';
+  document.getElementById('managerArea').style.display = 'none';
+  document.getElementById('clientTabs').style.display = 'flex';
+  document.getElementById('managerTabs').style.display = 'none';
+  document.getElementById('modeClientBtn').classList.add('active');
+  document.getElementById('modeManagerBtn').classList.remove('active');
+  document.getElementById('modeLabel').textContent = 'Client Portal';
+  document.getElementById('topChip').textContent = C ? CI : 'Select account';
+  document.getElementById('topChip').style.background = CC || 'var(--teal)';
+}
+
+function promptMode() { if (!isManager) return; }
+
+function checkPin(e) { if (e.key === 'Enter') checkPinBtn(); }
+function checkPinBtn() {
+  const pin = document.getElementById('pinInput').value;
+  if (pin === MGR_PIN) {
+    document.getElementById('pinOverlay').style.display = 'none';
+    document.getElementById('pinInput').value = '';
+    document.getElementById('pinErr').textContent = '';
+    openManager();
+  } else {
+    document.getElementById('pinErr').textContent = 'Incorrect PIN. Try again.';
+    document.getElementById('pinInput').value = '';
+  }
+}
+function closePin() {
+  document.getElementById('pinOverlay').style.display = 'none';
+  document.getElementById('pinInput').value = '';
+  document.getElementById('pinErr').textContent = '';
+}
+
+function openManager() {
+  isManager = true;
+  document.getElementById('clientArea').style.display = 'none';
+  document.getElementById('managerArea').style.display = 'block';
+  document.getElementById('clientTabs').style.display = 'none';
+  document.getElementById('managerTabs').style.display = 'flex';
+  document.getElementById('modeClientBtn').classList.remove('active');
+  document.getElementById('modeManagerBtn').classList.add('active');
+  document.getElementById('modeLabel').textContent = 'Manager Dashboard';
+  document.getElementById('topChip').textContent = '🔧 Manager';
+  document.getElementById('topChip').style.background = '#8B5E00';
+  loadManagerOverview();
+  loadMmHistory();
+  loadClientsTable();
+  document.getElementById('mmMonth').selectedIndex = new Date().getMonth();
+  document.getElementById('bilMonth').selectedIndex = new Date().getMonth();
+}
+
+// ── CLIENT TABS ──
+function showTab(name, btn) {
+  document.querySelectorAll('#clientArea .screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('#clientTabs .tab-btn').forEach(t => t.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo(0, 0);
+  if (name === 'history') renderHistory();
+  if (name === 'reports') renderReports();
+}
+
+// ── MANAGER TABS ──
+function showMgrTab(name, btn) {
+  document.querySelectorAll('#managerArea .screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('#managerTabs .tab-btn').forEach(t => t.classList.remove('active'));
+  document.getElementById('mgr-screen-' + name).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo(0, 0);
+  if (name === 'clients') loadClientsTable();
+  if (name === 'overview') loadManagerOverview();
+  if (name === 'mainmeter') loadMmHistory();
+}
+
+// ── CLIENT SELECT ──
+function pick(key, full, color, init, el) {
+  C = key; CF = full; CC = color; CI = init;
+  document.querySelectorAll('.ctile').forEach(t => t.classList.remove('sel'));
+  el.classList.add('sel');
+  document.getElementById('topChip').textContent = init;
+  document.getElementById('topChip').style.background = color;
+  showClientUI();
+  prefillPrev();
+  renderHome();
+  renderHistory();
+  renderReports();
+}
+
+function showClientUI() {
+  ['home-empty','sub-empty','hist-empty','rep-empty'].forEach(id => document.getElementById(id).style.display = 'none');
+  ['home-body','sub-form','hist-body','rep-body'].forEach(id => document.getElementById(id).style.display = 'block');
+}
+
+async function prefillPrev() {
+  const r = await getReadings(C);
+  document.getElementById('fPrev').value = r.length ? r[r.length-1].curr : '';
+  document.getElementById('fCurr').value = '';
+  document.getElementById('billBox').style.display = 'none';
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('fMonth').selectedIndex = new Date().getMonth();
+}
+
+// ── CALC (client) ──
+function calc() {
+  const prev = parseFloat(document.getElementById('fPrev').value) || 0;
+  const curr = parseFloat(document.getElementById('fCurr').value) || 0;
+  if (curr > 0 && curr >= prev) {
+    const cons = +(curr - prev).toFixed(3);
+    const charge = Math.round(cons * RATE);
+    document.getElementById('bCons').textContent = cons.toFixed(2) + ' m³';
+    document.getElementById('bCharge').textContent = 'Ksh ' + charge.toLocaleString();
+    document.getElementById('bTotal').textContent = 'Ksh ' + charge.toLocaleString();
+    document.getElementById('billBox').style.display = 'block';
+    document.getElementById('submitBtn').disabled = false;
+  } else {
+    document.getElementById('billBox').style.display = 'none';
+    document.getElementById('submitBtn').disabled = true;
+  }
+}
+
+// ── SUBMIT READING ──
+async function doSubmit() {
+  const month = document.getElementById('fMonth').value;
+  const year  = document.getElementById('fYear').value;
+  const prev  = parseFloat(document.getElementById('fPrev').value) || 0;
+  const curr  = parseFloat(document.getElementById('fCurr').value);
+  const cons  = +(curr - prev).toFixed(3);
+  const charge = Math.round(cons * RATE);
+  const period = month + ' ' + year;
+  const rows = await getReadings(C);
+  // prevent duplicate period
+  const existing = rows.findIndex(r => r.period === period);
+  const entry = { id: Date.now(), period, prev, curr, consumption: cons, charge, deficit: 0, repairs: 0, total: charge, finalized: false, date: new Date().toLocaleDateString('en-KE') };
+  if (existing >= 0) rows[existing] = entry; else rows.push(entry);
+  await saveReadings(C, rows);
+  document.getElementById('fPrev').value = curr;
+  document.getElementById('fCurr').value = '';
+  document.getElementById('billBox').style.display = 'none';
+  document.getElementById('submitBtn').disabled = true;
+  clearCache();
+  toast('✓ Reading submitted for ' + period + (isConfigured ? ' — synced to cloud ☁️' : ' (saved locally)'));
+  renderHome();
+  renderHistory();
+}
+
+// ── RENDER HOME ──
+async function renderHome() {
+  if (!C) return;
+  const r = await getReadings(C);
+  const totalM3 = r.reduce((s, x) => s + x.consumption, 0);
+  const totalBill = r.reduce((s, x) => s + x.total, 0);
+  document.getElementById('st-count').textContent = r.length;
+  document.getElementById('st-m3').textContent = totalM3.toFixed(1);
+  document.getElementById('st-bill').textContent = 'Ksh ' + Math.round(totalBill).toLocaleString();
+  // chart
+  const recent = r.slice(-7);
+  const chart = document.getElementById('mini-chart');
+  if (!recent.length) { chart.innerHTML = '<div style="width:100%;text-align:center;font-size:13px;color:var(--g500);padding:20px 0">No readings yet</div>'; return; }
+  const mx = Math.max(...recent.map(x => x.consumption), 1);
+  chart.innerHTML = recent.map(x => {
+    const h = Math.max(4, Math.round((x.consumption / mx) * 88));
+    return `<div class="bar-col"><div class="bar-rect" style="height:${h}px;background:${CC}99"></div><div class="bar-lbl">${x.period.slice(0,3)}</div></div>`;
+  }).join('');
+}
+
+// ── RENDER HISTORY ──
+async function renderHistory() {
+  if (!C) return;
+  const r = [...(await getReadings(C))].reverse();
+  const list = document.getElementById('histList');
+  if (!r.length) { list.innerHTML = '<div class="empty" style="padding:32px 0"><div class="empty-ico">📋</div><div class="empty-t">No readings yet</div></div>'; return; }
+  list.innerHTML = r.map(x => `
+    <div class="hitem">
+      <div class="hdot" style="background:${CC}"></div>
+      <div style="flex:1">
+        <div class="hperiod">${x.period}</div>
+        <div class="hdetail">${x.consumption.toFixed(2)} m³ · ${x.date}${x.deficit > 0 ? ' · +deficit share' : ''}</div>
+      </div>
+      <div>
+        <div class="hamount">Ksh ${x.total.toLocaleString()}</div>
+        <div class="hm3"><span class="badge ${x.finalized ? 'badge-g' : 'badge-a'}">${x.finalized ? 'Finalised' : 'Pending'}</span></div>
+      </div>
+    </div>`).join('');
+}
+
+// ── RENDER REPORTS ──
+async function renderReports() {
+  if (!C) return;
+  const r = await getReadings(C);
+  document.getElementById('repAvatar').textContent = CI;
+  document.getElementById('repAvatar').style.background = CC;
+  document.getElementById('repName').textContent = CF;
+  document.getElementById('repMeter').textContent = 'Meter: ' + C + '  ·  Rate: Ksh 150/m³';
+  document.getElementById('repPeriod').textContent = r.length ? r[0].period + ' – ' + r[r.length-1].period : 'No readings yet';
+  document.getElementById('repM3').textContent = r.reduce((s,x) => s+x.consumption, 0).toFixed(2) + ' m³';
+  document.getElementById('repTotal').textContent = 'Ksh ' + Math.round(r.reduce((s,x) => s+x.total, 0)).toLocaleString();
+}
+
+// ── MAIN METER CALC ──
+function calcMM() {
+  const prev = parseFloat(document.getElementById('mmPrev').value) || 0;
+  const curr = parseFloat(document.getElementById('mmCurr').value) || 0;
+  if (curr > 0 && curr >= prev) {
+    document.getElementById('mmConsVal').textContent = (curr - prev).toFixed(3) + ' m³';
+    document.getElementById('mmPreview').style.display = 'block';
+  } else {
+    document.getElementById('mmPreview').style.display = 'none';
+  }
+}
+
+async function saveMainMeter() {
+  const month = document.getElementById('mmMonth').value;
+  const year  = document.getElementById('mmYear').value;
+  const prev  = parseFloat(document.getElementById('mmPrev').value) || 0;
+  const curr  = parseFloat(document.getElementById('mmCurr').value);
+  const repairs = parseFloat(document.getElementById('mmRepairs').value) || 0;
+  if (!curr || curr < prev) { toast('Enter valid readings'); return; }
+  const cons = +(curr - prev).toFixed(3);
+  const period = month + ' ' + year;
+  const rows = await getMainMeters();
+  const existing = rows.findIndex(r => r.period === period);
+  const entry = { period, prev, curr, consumption: cons, repairs, date: new Date().toLocaleDateString('en-KE') };
+  if (existing >= 0) rows[existing] = entry; else rows.push(entry);
+  await saveMainMeters(rows);
+  document.getElementById('mmPrev').value = curr;
+  document.getElementById('mmCurr').value = '';
+  document.getElementById('mmRepairs').value = 0;
+  document.getElementById('mmPreview').style.display = 'none';
+  clearCache();
+  toast('Main meter saved for ' + period);
+  loadMmHistory();
+  loadManagerOverview();
+}
+
+async function loadMmHistory() {
+  const rows = [...(await getMainMeters())].reverse();
+  const el = document.getElementById('mmHistList');
+  if (!rows.length) { el.innerHTML = '<div class="empty" style="padding:24px 0"><div class="empty-ico">🔢</div><div class="empty-t">No main meter readings yet</div></div>'; return; }
+  el.innerHTML = rows.map(r => `
+    <div class="hitem">
+      <div class="hdot" style="background:var(--navy)"></div>
+      <div style="flex:1"><div class="hperiod">${r.period}</div><div class="hdetail">${r.consumption.toFixed(3)} m³ · Repairs: Ksh ${r.repairs.toLocaleString()}</div></div>
+      <div><div class="hamount">${r.curr.toFixed(3)}</div><div class="hm3" style="color:var(--g500)">current</div></div>
+    </div>`).join('');
+}
+
+// ── CLIENTS TABLE ──
+async function loadClientsTable() {
+  const wrap = document.getElementById('clientsTableWrap');
+  wrap.innerHTML = '<div class="loading">Loading…</div>';
+  const allReadings = {};
+  for (const key of Object.keys(CLIENTS)) {
+    allReadings[key] = await getReadings(key);
+  }
+  let html = '<div style="overflow-x:auto"><table class="mgr-table"><thead><tr><th>Client</th><th>Latest period</th><th>Reading (m³)</th><th>Consumption</th><th>Status</th></tr></thead><tbody>';
+  for (const [key, info] of Object.entries(CLIENTS)) {
+    const rows = allReadings[key];
+    if (!rows.length) {
+      html += `<tr><td><div style="display:flex;align-items:center;gap:8px"><div class="avatar" style="width:28px;height:28px;font-size:10px;background:${info.color}">${info.init}</div>${info.full}</div></td><td colspan="4" style="color:var(--g400)">No readings submitted</td></tr>`;
+    } else {
+      const last = rows[rows.length - 1];
+      html += `<tr><td><div style="display:flex;align-items:center;gap:8px"><div class="avatar" style="width:28px;height:28px;font-size:10px;background:${info.color}">${info.init}</div>${info.full}</div></td><td>${last.period}</td><td>${last.curr.toFixed(3)}</td><td>${last.consumption.toFixed(2)} m³</td><td><span class="badge ${last.finalized ? 'badge-g' : 'badge-a'}">${last.finalized ? 'Finalised' : 'Pending'}</span></td></tr>`;
+    }
+  }
+  html += '</tbody></table></div>';
+  wrap.innerHTML = html;
+}
+
+// ── MANAGER OVERVIEW ──
+async function loadManagerOverview() {
+  const el = document.getElementById('mgrOverviewContent');
+  el.innerHTML = '<div class="loading">Loading…</div>';
+  const mms = await getMainMeters();
+  const allR = {};
+  for (const k of Object.keys(CLIENTS)) allR[k] = await getReadings(k);
+  const totalM3Main = mms.reduce((s,x) => s+x.consumption, 0);
+  const totalM3Clients = Object.values(allR).reduce((s, rows) => s + rows.reduce((a,r)=>a+r.consumption,0), 0);
+  const totalBilled = Object.values(allR).reduce((s, rows) => s + rows.reduce((a,r)=>a+r.total,0), 0);
+  const pending = Object.values(allR).reduce((s, rows) => s + rows.filter(r=>!r.finalized).length, 0);
+  el.innerHTML = `
+    <div class="srow">
+      <div class="scard"><div class="sval">${totalM3Main.toFixed(1)}</div><div class="slbl2">Main meter (m³)</div></div>
+      <div class="scard"><div class="sval">${totalM3Clients.toFixed(1)}</div><div class="slbl2">Client total (m³)</div></div>
+    </div>
+    <div class="srow">
+      <div class="scard"><div class="sval">Ksh ${Math.round(totalBilled/1000)}k</div><div class="slbl2">Total billed</div></div>
+      <div class="scard"><div class="sval" style="color:${pending>0?'var(--amber)':'var(--green)'}">${pending}</div><div class="slbl2">Pending readings</div></div>
+    </div>
+    <div class="slabel">Quick actions</div>
+    <button class="btn btn-navy" onclick="showMgrTab('billing',document.querySelectorAll('#managerTabs .tab-btn')[3])" style="margin-bottom:10px">Calculate deficit &amp; bills</button>
+    <button class="btn btn-outline" onclick="showMgrTab('clients',document.querySelectorAll('#managerTabs .tab-btn')[2])">View all client readings</button>`;
+}
+
+// ── DEFICIT CALCULATION ──
+async function calcDeficit() {
+  const month = document.getElementById('bilMonth').value;
+  const year  = document.getElementById('bilYear').value;
+  const period = month + ' ' + year;
+  const result = document.getElementById('billingResult');
+  result.innerHTML = '<div class="loading">Calculating…</div>';
+
+  const mms = await getMainMeters();
+  const mm = mms.find(r => r.period === period);
+  const allR = {};
+  for (const k of Object.keys(CLIENTS)) allR[k] = await getReadings(k);
+
+  const clientEntries = {};
+  let clientTotal = 0;
+  for (const [k, rows] of Object.entries(allR)) {
+    const entry = rows.find(r => r.period === period);
+    clientEntries[k] = entry || null;
+    if (entry) clientTotal += entry.consumption;
+  }
+
+  const missingClients = Object.keys(CLIENTS).filter(k => !clientEntries[k]);
+  const mmCons = mm ? mm.consumption : null;
+  const repairs = mm ? mm.repairs : 0;
+
+  let html = `<div class="slabel">Period: ${period}</div>`;
+
+  if (!mm) {
+    html += `<div class="deficit-note"><span>⚠️</span><span>No main meter reading found for ${period}. Please record it in the Main Meter tab first.</span></div>`;
+    result.innerHTML = html; return;
+  }
+
+  if (missingClients.length > 0) {
+    html += `<div class="deficit-note"><span>⚠️</span><span>Missing readings from: ${missingClients.map(k => CLIENTS[k].full).join(', ')}. Proceed with caution.</span></div>`;
+  }
+
+  const submittedCount = 4 - missingClients.length;
+  const deficit = +(mmCons - clientTotal).toFixed(3);
+  const deficitCost = Math.round(deficit * RATE);
+  const repairsShare = Math.round(repairs / 4);
+  const deficitShare = Math.round(deficitCost / 4);
+  const totalAdjPerClient = deficitShare + repairsShare;
+  const isDeficit = deficit > 0;
+
+  html += `
+    <div class="deficit-panel ${isDeficit ? '' : 'ok'}">
+      <div class="dp-title ${isDeficit ? 'red' : 'green'}">${isDeficit ? '⚠️ Deficit detected' : '✓ No deficit'}</div>
+      <div class="dp-grid">
+        <div class="dp-item"><div class="dp-lbl">Main meter</div><div class="dp-val">${mmCons.toFixed(2)} m³</div></div>
+        <div class="dp-item"><div class="dp-lbl">Clients total</div><div class="dp-val">${clientTotal.toFixed(2)} m³</div></div>
+        <div class="dp-item"><div class="dp-lbl">Deficit (m³)</div><div class="dp-val ${isDeficit ? 'red' : ''}">${deficit.toFixed(2)} m³</div></div>
+        <div class="dp-item"><div class="dp-lbl">Deficit cost</div><div class="dp-val ${isDeficit ? 'red' : ''}">Ksh ${Math.abs(deficitCost).toLocaleString()}</div></div>
+      </div>
+      ${isDeficit || repairs > 0 ? `
+      <div class="dp-share">
+        <div class="dp-share-lbl">Adjustment per client</div>
+        <div class="dp-share-val">Ksh ${totalAdjPerClient.toLocaleString()}</div>
+        <div class="dp-share-sub">Deficit share: Ksh ${deficitShare.toLocaleString()} + Repairs: Ksh ${repairsShare.toLocaleString()}</div>
+      </div>` : ''}
+    </div>
+
+    <div class="slabel">Bill breakdown for ${period}</div>
+    <div style="overflow-x:auto">
+    <table class="mgr-table">
+      <thead><tr><th>Client</th><th>Consumption</th><th>Water bill</th><th>Deficit share</th><th>Repairs share</th><th>Total due</th></tr></thead>
+      <tbody>`;
+
+  for (const [key, info] of Object.entries(CLIENTS)) {
+    const entry = clientEntries[key];
+    if (!entry) {
+      html += `<tr><td>${info.full}</td><td colspan="5" style="color:var(--g400)">No reading submitted</td></tr>`;
+    } else {
+      const clientTotal2 = entry.charge + deficitShare + repairsShare;
+      html += `<tr>
+        <td><div style="display:flex;align-items:center;gap:8px"><div class="avatar" style="width:24px;height:24px;font-size:9px;background:${info.color}">${info.init}</div>${info.full}</div></td>
+        <td>${entry.consumption.toFixed(2)} m³</td>
+        <td>Ksh ${entry.charge.toLocaleString()}</td>
+        <td style="color:${isDeficit?'var(--red)':'var(--g500)'}">Ksh ${deficitShare.toLocaleString()}</td>
+        <td>Ksh ${repairsShare.toLocaleString()}</td>
+        <td style="font-weight:700;color:var(--navy)">Ksh ${clientTotal2.toLocaleString()}</td>
+      </tr>`;
+    }
+  }
+  html += '</tbody></table></div>';
+  html += `<button class="btn btn-teal" style="margin-top:16px" onclick="finaliseDeficit('${period}',${deficitShare},${repairsShare})">Finalise &amp; push bills to clients</button>`;
+  result.innerHTML = html;
+}
+
+async function finaliseDeficit(period, defShare, repShare) {
+  for (const key of Object.keys(CLIENTS)) {
+    const rows = await getReadings(key);
+    const idx = rows.findIndex(r => r.period === period);
+    if (idx >= 0) {
+      rows[idx].deficit  = defShare;
+      rows[idx].repairs  = repShare;
+      rows[idx].total    = rows[idx].charge + defShare + repShare;
+      rows[idx].finalized = true;
+      await saveReadings(key, rows);
+    }
+  }
+  clearCache();
+  toast('Bills finalised for ' + period + ' — clients will see updated amounts');
+  loadClientsTable();
+  loadManagerOverview();
+}
+
+// ── PDF ──
+async function doPDF() {
+  const r = await getReadings(C);
+  if (!window.jspdf) { toast('Loading…'); setTimeout(doPDF, 900); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const W = 210, M = 16;
+  doc.setFillColor(15,32,68); doc.rect(0,0,W,36,'F');
+  doc.setTextColor(255,255,255); doc.setFontSize(18); doc.setFont('helvetica','bold');
+  doc.text('TetraPark Water Utility', M, 15);
+  doc.setFontSize(10); doc.setFont('helvetica','normal');
+  doc.text('Billing Statement — ' + CF, M, 23);
+  doc.text('Generated: ' + new Date().toLocaleDateString('en-KE',{day:'2-digit',month:'long',year:'numeric'}), M, 30);
+  doc.setFillColor(232,242,255); doc.rect(M,42,W-M*2,20,'F');
+  doc.setTextColor(15,32,68); doc.setFontSize(11); doc.setFont('helvetica','bold');
+  doc.text(CF, M+4, 51);
+  doc.setFontSize(9); doc.setFont('helvetica','normal');
+  doc.text('Meter: ' + C + '    Rate: Ksh 150/m³', M+4, 58);
+  const tm3 = r.reduce((s,x)=>s+x.consumption,0);
+  const tb  = r.reduce((s,x)=>s+x.total,0);
+  const bw  = (W-M*2-8)/3;
+  [['Readings',r.length.toString()],['Total m³',tm3.toFixed(2)+' m³'],['Total Billed','Ksh '+Math.round(tb).toLocaleString()]].forEach(([l,v],i)=>{
+    const x=M+i*(bw+4);
+    doc.setFillColor(240,244,250); doc.rect(x,68,bw,16,'F');
+    doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(113,128,150); doc.text(l,x+3,74);
+    doc.setFontSize(10); doc.setFont('helvetica','bold'); doc.setTextColor(15,32,68); doc.text(v,x+3,81);
+  });
+  let y = 92;
+  doc.setFillColor(27,90,171); doc.rect(M,y,W-M*2,7,'F');
+  doc.setTextColor(255,255,255); doc.setFontSize(7.5); doc.setFont('helvetica','bold');
+  const cx=[M+2,M+34,M+68,M+96,M+124,M+156];
+  ['Period','Consumption','Water Bill','Deficit','Repairs','Total Due'].forEach((h,i)=>doc.text(h,cx[i],y+4.8));
+  y+=8;
+  [...r].reverse().forEach((row,idx)=>{
+    if(idx%2===0){doc.setFillColor(248,250,252);doc.rect(M,y-0.5,W-M*2,7,'F');}
+    doc.setTextColor(26,32,44);doc.setFont('helvetica','normal');doc.setFontSize(8);
+    doc.text(row.period,cx[0],y+4.2);
+    doc.text(row.consumption.toFixed(2)+' m³',cx[1],y+4.2);
+    doc.text('Ksh '+row.charge.toLocaleString(),cx[2],y+4.2);
+    doc.text('Ksh '+row.deficit.toLocaleString(),cx[3],y+4.2);
+    doc.text('Ksh '+row.repairs.toLocaleString(),cx[4],y+4.2);
+    doc.setFont('helvetica','bold'); doc.text('Ksh '+row.total.toLocaleString(),cx[5],y+4.2);
+    y+=7; if(y>272){doc.addPage();y=16;}
+  });
+  y+=2;
+  doc.setFillColor(15,32,68);doc.rect(M,y,W-M*2,8,'F');
+  doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(9);
+  doc.text('TOTAL',cx[0],y+5.5);doc.text(tm3.toFixed(2)+' m³',cx[1],y+5.5);
+  doc.text('Ksh '+Math.round(tb).toLocaleString(),cx[5],y+5.5);
+  doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(160,160,160);
+  doc.text('TetraPark Water Utility — For queries contact your utility manager.',M,286);
+  doc.save('TetraPark_'+C+'_'+new Date().getFullYear()+'.pdf');
+  toast('PDF downloaded');
+}
+
+async function doCSV() {
+  if (!C) return;
+  const r = await getReadings(C);
+  if (!r.length) { toast('No data to export'); return; }
+  let csv = 'Period,Prev (m³),Curr (m³),Consumption (m³),Water Bill (Ksh),Deficit (Ksh),Repairs (Ksh),Total Due (Ksh),Finalised,Date\n';
+  r.forEach(x => { csv += `"${x.period}",${x.prev},${x.curr},${x.consumption},${x.charge},${x.deficit},${x.repairs},${x.total},${x.finalized?'Yes':'No'},"${x.date}"\n`; });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = 'TetraPark_' + C + '.csv'; a.click();
+  toast('CSV exported');
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+// Init
+document.getElementById('fMonth').selectedIndex = new Date().getMonth();
+document.getElementById('mmMonth').selectedIndex = new Date().getMonth();
+document.getElementById('bilMonth').selectedIndex = new Date().getMonth();
+
+// Cloud storage configured ✓
+</script>
+</body>
+</html>
