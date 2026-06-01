@@ -63,13 +63,13 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--g100);color:v
 .divrow:last-child{border-bottom:none;padding-bottom:0;}
 
 /* CLIENT TILES */
-.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
-.ctile{background:#fff;border:2px solid var(--g200);border-radius:14px;padding:18px 10px 14px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent;user-select:none;}
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.ctile{background:#fff;border:2px solid var(--g200);border-radius:12px;padding:10px 12px;display:flex;flex-direction:row;align-items:center;gap:10px;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent;user-select:none;min-height:54px;}
 .ctile:active{transform:scale(.97);}
 .ctile.sel{border-color:var(--blue);background:var(--blue-l);}
-.avatar{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;}
-.cname{font-size:13px;font-weight:600;color:var(--g900);text-align:center;line-height:1.3;}
-.cmeter{font-size:11px;color:var(--g500);}
+.avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;}
+.cname{font-size:13px;font-weight:600;color:var(--g900);line-height:1.3;}
+.cmeter{font-size:10px;color:var(--g500);}
 
 /* STATS */
 .srow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
@@ -82,6 +82,14 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--g100);color:v
 .bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
 .bar-rect{width:100%;border-radius:5px 5px 0 0;min-height:3px;}
 .bar-lbl{font-size:9px;color:var(--g500);}
+/* PIE CHART */
+.pie-wrap{display:flex;align-items:center;gap:16px;}
+.pie-svg{flex-shrink:0;}
+.pie-legend{flex:1;display:flex;flex-direction:column;gap:6px;}
+.pie-leg-item{display:flex;align-items:center;gap:8px;font-size:12px;}
+.pie-leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.pie-leg-name{flex:1;color:var(--g700);font-weight:500;}
+.pie-leg-val{color:var(--g500);font-size:11px;}
 
 /* FORM */
 .field{margin-bottom:14px;}
@@ -215,24 +223,37 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   <div class="cgrid">
     <div class="ctile" id="tile-Mugure" onclick="pick('Mugure','Grace Mugure','#1B5AAB','GM',this)">
       <div class="avatar" style="background:#1B5AAB">GM</div>
-      <div class="cname">Grace Mugure</div><div class="cmeter">Mugure meter</div>
+      <div><div class="cname">Grace Mugure</div><div class="cmeter">Mugure meter</div></div>
     </div>
     <div class="ctile" id="tile-Cera" onclick="pick('Cera','Cera Waweru','#0A7D8C','CW',this)">
       <div class="avatar" style="background:#0A7D8C">CW</div>
-      <div class="cname">Cera Waweru</div><div class="cmeter">Cera meter</div>
+      <div><div class="cname">Cera Waweru</div><div class="cmeter">Cera meter</div></div>
     </div>
     <div class="ctile" id="tile-George" onclick="pick('George','George Karanja','#1A7A4A','GK',this)">
       <div class="avatar" style="background:#1A7A4A">GK</div>
-      <div class="cname">George Karanja</div><div class="cmeter">George meter</div>
+      <div><div class="cname">George Karanja</div><div class="cmeter">George meter</div></div>
     </div>
     <div class="ctile" id="tile-Gathauri" onclick="pick('Gathauri','Lucy Gathauri','#8B5E00','LG',this)">
       <div class="avatar" style="background:#8B5E00">LG</div>
-      <div class="cname">Lucy Gathauri</div><div class="cmeter">Gathauri meter</div>
+      <div><div class="cname">Lucy Gathauri</div><div class="cmeter">Gathauri meter</div></div>
     </div>
   </div>
-  <div id="home-empty" style="text-align:center;padding:20px 0;color:var(--g500);font-size:14px">Tap your name above to view your account</div>
+
+  <!-- CONSUMPTION PIE CHART — visible to all, loads from cloud -->
+  <div class="slabel">Latest period — consumption breakdown</div>
+  <div class="card" style="padding:14px 16px" id="pie-card">
+    <div style="text-align:center;font-size:13px;color:var(--g500);padding:16px 0">Loading data…</div>
+  </div>
+
+  <!-- MAIN METER SUMMARY -->
+  <div class="slabel">Main meter</div>
+  <div class="card" id="mm-summary-card" style="padding:0 16px">
+    <div style="text-align:center;font-size:13px;color:var(--g500);padding:16px 0">Loading…</div>
+  </div>
+
+  <div id="home-empty" style="text-align:center;padding:12px 0;color:var(--g500);font-size:14px">Tap your name above for your personal account</div>
   <div id="home-body" style="display:none">
-    <div class="slabel">Account overview</div>
+    <div class="slabel">Your account overview</div>
     <div class="srow">
       <div class="scard"><div class="sval" id="st-count">0</div><div class="slbl2">Readings</div></div>
       <div class="scard"><div class="sval" id="st-m3">0</div><div class="slbl2">Total m³</div></div>
@@ -241,7 +262,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
       <div style="font-size:11px;font-weight:700;color:var(--g500);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Total billed (incl. deficit shares)</div>
       <div style="font-size:28px;font-weight:700;color:var(--navy)" id="st-bill">Ksh 0</div>
     </div>
-    <div class="slabel">Recent usage</div>
+    <div class="slabel">Your recent usage</div>
     <div class="card" style="padding:14px">
       <div class="chart-wrap" id="mini-chart"><div style="width:100%;text-align:center;font-size:13px;color:var(--g500);padding:20px 0">No readings yet</div></div>
     </div>
@@ -660,6 +681,7 @@ function showTab(name, btn) {
   document.getElementById('screen-' + name).classList.add('active');
   btn.classList.add('active');
   window.scrollTo(0, 0);
+  if (name === 'home') { clearCache(); renderPieChart(); }
   if (name === 'history') renderHistory();
   if (name === 'reports') renderReports();
 }
@@ -759,6 +781,133 @@ async function doSubmit() {
   renderHistory();
 }
 
+// ── PIE CHART (shared — all clients see this on home screen) ──
+function describeArc(cx, cy, r, startAngle, endAngle) {
+  const toRad = a => (a - 90) * Math.PI / 180;
+  const x1 = cx + r * Math.cos(toRad(startAngle));
+  const y1 = cy + r * Math.sin(toRad(startAngle));
+  const x2 = cx + r * Math.cos(toRad(endAngle));
+  const y2 = cy + r * Math.sin(toRad(endAngle));
+  const large = endAngle - startAngle > 180 ? 1 : 0;
+  return `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} Z`;
+}
+
+async function renderPieChart() {
+  const card = document.getElementById('pie-card');
+  const mmCard = document.getElementById('mm-summary-card');
+  if (!card) return;
+
+  // Get latest period readings for all clients
+  const allData = {};
+  for (const k of Object.keys(CLIENTS)) {
+    const rows = await getReadings(k);
+    allData[k] = rows;
+  }
+
+  // Find the most recent shared period
+  const allPeriods = new Set();
+  Object.values(allData).forEach(rows => rows.forEach(r => allPeriods.add(r.period)));
+  if (!allPeriods.size) {
+    card.innerHTML = '<div style="text-align:center;padding:20px;font-size:13px;color:var(--g500)">No readings yet — pie chart will appear once clients submit</div>';
+    mmCard.innerHTML = '<div style="text-align:center;padding:16px;font-size:13px;color:var(--g500)">No data yet</div>';
+    return;
+  }
+
+  // Sort periods and get latest
+  const sortedPeriods = [...allPeriods].sort((a, b) => {
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const [am, ay] = a.split(' '); const [bm, by] = b.split(' ');
+    return (parseInt(by) - parseInt(ay)) || (months.indexOf(bm) - months.indexOf(am));
+  });
+  const latestPeriod = sortedPeriods[0];
+
+  // Get each client's consumption for latest period
+  const segments = [];
+  let clientTotal = 0;
+  for (const [k, info] of Object.entries(CLIENTS)) {
+    const entry = allData[k].find(r => r.period === latestPeriod);
+    const cons = entry ? entry.consumption : 0;
+    clientTotal += cons;
+    segments.push({ key: k, name: info.full.split(' ')[0], color: info.color, cons, entry });
+  }
+
+  // Get main meter for this period
+  const mms = await getMainMeters();
+  const mm = mms.find(r => r.period === latestPeriod);
+  const mmCons = mm ? mm.consumption : null;
+  const deficit = mmCons !== null ? +(mmCons - clientTotal).toFixed(3) : null;
+
+  // Build pie data — clients + deficit slice
+  const pieData = segments.filter(s => s.cons > 0).map(s => ({ ...s }));
+  if (deficit !== null && deficit > 0) {
+    pieData.push({ key: 'deficit', name: 'Deficit', color: '#B83030', cons: deficit });
+  }
+  const total = pieData.reduce((s, d) => s + d.cons, 0);
+
+  if (total === 0) {
+    card.innerHTML = '<div style="text-align:center;padding:20px;font-size:13px;color:var(--g500)">No consumption data for latest period</div>';
+    return;
+  }
+
+  // Draw SVG pie
+  const cx = 80, cy = 80, r = 68, ir = 36; // donut
+  let angle = 0;
+  let paths = '';
+  pieData.forEach(d => {
+    const slice = (d.cons / total) * 360;
+    const endAngle = angle + slice;
+    paths += `<path d="${describeArc(cx, cy, r, angle, Math.min(endAngle, angle + slice - 0.3))}" fill="${d.color}" stroke="white" stroke-width="1.5"/>`;
+    angle = endAngle;
+  });
+  // Center hole
+  paths += `<circle cx="${cx}" cy="${cy}" r="${ir}" fill="white"/>`;
+  // Center text
+  paths += `<text x="${cx}" y="${cy - 6}" text-anchor="middle" font-size="11" font-weight="700" fill="#0F2044">${clientTotal.toFixed(1)}</text>`;
+  paths += `<text x="${cx}" y="${cy + 8}" text-anchor="middle" font-size="9" fill="#718096">m³ billed</text>`;
+
+  // Legend
+  const legendItems = pieData.map(d => {
+    const pct = ((d.cons / total) * 100).toFixed(1);
+    const isDeficit = d.key === 'deficit';
+    return `<div class="pie-leg-item">
+      <div class="pie-leg-dot" style="background:${d.color}${isDeficit ? '' : ''}"></div>
+      <div class="pie-leg-name" style="${isDeficit ? 'color:var(--red);font-weight:600' : ''}">${d.name}</div>
+      <div class="pie-leg-val">${d.cons.toFixed(2)}m³ <span style="color:${d.color};font-weight:600">${pct}%</span></div>
+    </div>`;
+  }).join('');
+
+  card.innerHTML = `
+    <div style="font-size:11px;font-weight:700;color:var(--g500);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">${latestPeriod}</div>
+    <div class="pie-wrap">
+      <svg class="pie-svg" width="160" height="160" viewBox="0 0 160 160">${paths}</svg>
+      <div class="pie-legend">${legendItems}</div>
+    </div>`;
+
+  // ── MAIN METER SUMMARY CARD ──
+  if (!mm) {
+    mmCard.innerHTML = '<div style="padding:14px;font-size:13px;color:var(--g500)">No main meter reading for this period yet</div>';
+    return;
+  }
+  const deficitCost = deficit !== null ? Math.round(Math.max(0, deficit) * 150) : 0;
+  const deficitShare = Math.round(deficitCost / 4);
+  mmCard.innerHTML = `
+    <div class="hitem">
+      <div style="font-size:22px">🔢</div>
+      <div style="flex:1"><div style="font-weight:700;color:var(--navy)">${latestPeriod} — Main Meter</div><div style="font-size:12px;color:var(--g500);margin-top:2px">Supplier reading</div></div>
+      <div style="text-align:right"><div style="font-size:16px;font-weight:700;color:var(--navy)">${mm.curr.toFixed(3)}</div><div style="font-size:11px;color:var(--g500)">m³ current</div></div>
+    </div>
+    <div class="hitem">
+      <div style="font-size:22px">📊</div>
+      <div style="flex:1"><div style="font-weight:600;color:var(--navy)">Total supplied</div></div>
+      <div style="font-weight:700;color:var(--navy)">${mm.consumption.toFixed(2)} m³</div>
+    </div>
+    <div class="hitem" style="${deficit > 0 ? 'background:var(--red-l);margin:0 -16px;padding:12px 16px;border-radius:0 0 14px 14px' : ''}">
+      <div style="font-size:22px">${deficit > 0 ? '⚠️' : '✅'}</div>
+      <div style="flex:1"><div style="font-weight:600;color:${deficit > 0 ? 'var(--red)' : 'var(--green)'}">Deficit</div><div style="font-size:12px;color:var(--g500);margin-top:2px">${deficit > 0 ? 'Ksh ' + deficitShare.toLocaleString() + ' per client' : 'No deficit this period'}</div></div>
+      <div style="font-weight:700;color:${deficit > 0 ? 'var(--red)' : 'var(--green)'}">${deficit !== null ? (deficit > 0 ? deficit.toFixed(2) + ' m³' : '0 m³') : '—'}</div>
+    </div>`;
+}
+
 // ── RENDER HOME ──
 async function renderHome() {
   if (!C) return;
@@ -768,7 +917,7 @@ async function renderHome() {
   document.getElementById('st-count').textContent = r.length;
   document.getElementById('st-m3').textContent = totalM3.toFixed(1);
   document.getElementById('st-bill').textContent = 'Ksh ' + Math.round(totalBill).toLocaleString();
-  // chart
+  // bar chart
   const recent = r.slice(-7);
   const chart = document.getElementById('mini-chart');
   if (!recent.length) { chart.innerHTML = '<div style="width:100%;text-align:center;font-size:13px;color:var(--g500);padding:20px 0">No readings yet</div>'; return; }
@@ -1220,6 +1369,8 @@ document.getElementById('bilMonth').selectedIndex = billMonth;
 });
 // Check submission window on load
 checkSubmissionWindow();
+// Load pie chart on startup
+renderPieChart();
 
 // Cloud storage configured ✓
 </script>
